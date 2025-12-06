@@ -8,7 +8,7 @@
 # lsof -n | grep LISTEN
 # lsof -i :5000
 # kill -9 <PIN>
-#pip install numpy pandas scikit-learn
+#pip install numpy pandas scikit-learn flask
 #K-Nearest Neighbor Classification
 #h
 #| o  x  x
@@ -17,6 +17,7 @@
 import numpy as np
 import pandas as pd
 import statistics
+import pickle
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
@@ -24,8 +25,8 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import classification_report
 
-# 0 analyse sales data
-# data = pd.read_csv('sales.csv')
+data = pd.read_csv('sales.csv')
+# 1 Analyse sales data
 # print(data.describe())
 #              Age        Salary  Purchased
 # count  40.000000     40.000000  40.000000
@@ -37,25 +38,25 @@ from sklearn.metrics import classification_report
 # 75%    47.250000  60000.000000   1.000000
 # max    60.000000  95000.000000   1.000000
 
-# 1 create dataset x=age_salary, y=purchased_list
+# 2.1 Create dataset x=age_salary, y=purchased_list
 data = pd.read_csv('sales.csv')
 age_salary=data.iloc[:,:-1].values
 purchased_list=data.iloc[:,-1].values
 # print(age_salary)
 # print(purchased_list)
 
-# 2 find deviation with stdev of 1* *avr btw next item
+# 2.2 find deviation with stdev of 1* *avr btw next item
 # x_train, x_test, y_train, y_test = train_test_split(age_salary,purchased_list)
 x_train, x_test, y_train, y_test = train_test_split(age_salary,purchased_list,test_size=.20,random_state=0)
 sc=StandardScaler()
-x_train=sc.fit_transform(x_train)
-x_test=sc.transform(x_test)
-# print(x_train)
+x_train=sc.fit_transform(x_train) #32 items are used for training
+x_test=sc.transform(x_test) #8 items
+# print(x_train) 
 # print(x_test)
-# print(statistics.stdev([1,2,4])) # 1.52 
+# print(statistics.stdev([1,2,4])) # stdev sample: 1.52 
 # how to find each item of deviation with stdev of 1?
 
-# 3 find purchase rate for each customer
+# 2.3 Find purchase rate for each customer
 classifier=KNeighborsClassifier(n_neighbors=5,metric='minkowski',p=2)
 classifier.fit(x_train,y_train)
 y_pred=classifier.predict(x_test)
@@ -63,24 +64,46 @@ y_prob=classifier.predict_proba(x_test)[:,1]
 # print(y_pred)#[1   1   1 0   1   0   0 0]
 # print(y_prob)#[1 0.6 0.8 0 0.8 0.2 0.4 0] percentage customer buy the product
 
-# 4 find accuracy level result:0.875
+# 2.4 Find accuracy level by confusion matrix result:0.875
 # actual  [1 1]
 # estimate[1 0] 
 # score   [T F]
-cm=confusion_matrix(y_test,y_pred)
-# print(cm)
+# cm=confusion_matrix(y_test,y_pred)
+# print(cm)#[[3 0][1 4]] T ok, F wrong, F wrong, T ok (7 items are correct out of 8)
 # print(accuracy_score(y_test,y_pred)) #0.875
 # print(classification_report(y_test,y_pred))
 
-# 5 estimate purchase rate for age40 salary20000
-answer1=classifier.predict(sc.transform(np.array([[40,20000]])))
-probability_rate1=classifier.predict_proba(sc.transform(np.array([[40,20000]])))[:,1]
-print(answer1)
-print(probability_rate1)
-answer2=classifier.predict(sc.transform(np.array([[42,50000]])))
-probability_rate2=classifier.predict_proba(sc.transform(np.array([[42,50000]])))[:,1]
-print(answer2)
-print(probability_rate2)
+# ⭐︎2.5.1 way1 estimate purchase rate for example1(age40 salary20000), example2(age42 salary50000)
+# answer1=classifier.predict(sc.transform(np.array([[40,20000]])))
+# prob1=classifier.predict_proba(sc.transform(np.array([[40,20000]])))[:,1]
+# print(answer1,prob1) #ML prediction: not buy For 20%, this customer buy the product.
+# answer2=classifier.predict(sc.transform(np.array([[42,50000]])))
+# prob2=classifier.predict_proba(sc.transform(np.array([[42,50000]])))[:,1]
+# print(answer2,prob2) #ML prediction: buy For 80%, this customer buy the product.
+
+# ⭐︎2.5.2 way2 estimate purchase rate for example1(age40 salary20000), example2(age42 salary50000)
+# Save model and scaler dataset at local
+# pickle.dump(classifier, open('classifier.pickle', 'wb'))
+# pickle.dump(sc,open('sc.pickle','wb'))
+
+# 2.5.3  estimate 
+f1=pickle.load(open('classifier.pickle','rb'))
+f2=pickle.load(open('sc.pickle','rb'))
+answer1=f1.predict(f2.transform(np.array([[40,20000]])))
+prob1=f1.predict_proba(f2.transform(np.array([[40,20000]])))[:,-1]
+print(answer1, prob1)
+f1=pickle.load(open('classifier.pickle','rb'))
+f2=pickle.load(open('sc.pickle','rb'))
+answer2=f1.predict(f2.transform(np.array([[42,50000]])))
+prob2=f1.predict_proba(f2.transform(np.array([[42,50000]])))[:,-1]
+print(answer2, prob2)
+# df = pd.DataFrame(data)
+# scaler = StandardScaler()
+# scaled_data = scaler.fit_transform(df)
+# scaled_df = pd.DataFrame(scaled_data, columns=df.columns)
+# print("Original Data:\n", df)
+# print("\nScaled Data:\n", scaled_df)
+
 
 data = {
     'Age': [25, 30, 35, 40, 45],
@@ -92,9 +115,4 @@ stock = {
     'C': [4015,3850,3980,3595,3550,3795,3770,3870,3725,3585,3535,3980,4125,3725,3525,3670,3460,3360,3440,3230,3340,3450,3490,3380,3400,3725,3670,3755,3860,3855,4010,3760,3840,4015,4200,4285,4020,4010,3790,3920,3900,4000,4380,4570,4060,3880,3950,3740,3550,3830,3880,3940,4000,4240,4300,4780,4740,4290,4250,4540],
     'D': [30650,25430,24080,21840,18720,17780,18150,18270,16150,15880,17490,17930,18860,16830,15150,14000,12320,14230,13990,14480,13680,12970,11840,12710,10410,12760,11950,12930,13240,10530,11760,11580,12930,13520,12800,14370,16250,15000,15020,17470,15680,15120,11360,11150,12290,12600,11290,10300,11170,9950,11540,12980,10950,10260,10550,11130,12110,10060,9120,9680]
 }
-df = pd.DataFrame(data)
-scaler = StandardScaler()
-scaled_data = scaler.fit_transform(df)
-scaled_df = pd.DataFrame(scaled_data, columns=df.columns)
-print("Original Data:\n", df)
-print("\nScaled Data:\n", scaled_df)
+
