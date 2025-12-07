@@ -1,59 +1,38 @@
 #### ssh google cloud
 
 #### remove line
-ctr + k
-
+    ctr + k
 #### remove file
-rm sc.pickle
-
+    rm sc.pickle
 #### open and save file
-nano test.py
+    nano test.py
+    paste code
+    control + x
+    y
+    enter
+#### download file
+    sudo apt install wget
+    wget tfkerras_dataset.h5
+    wget https://github.com/kaedenakashima/ML/blob/867eca5462f81e6615c98bc619345cbe448a0c8d/practice01/asset/sc.pickle
 
-paste code
+#### load file
+  x getting error
 
-control + x
+    import pickle
+    from flask import Flask, request
+    import numpy as np
+    f1=pickle.load(open('classifier.pickle','rb'))
+    f2=pickle.load(open('sc.pickle','rb'))
+    ls 
 
-y
+#### create server folder
+    mkdir test
+    cd test
+    python3 -m venv venv
+    source venv/bin/activate
+    pip install numpy pandas scikit-learn flask requests
+    rm -f filename
+    python3 test.py
 
-enter
-
-#### 
-ls 
-
-mkdir test
-
-cd test
-
-python3 -m venv venv
-
-source venv/bin/activate
-
-pip install numpy pandas scikit-learn flask requests
-
-sudo apt install wget
-
-wget https://github.com/futurexskill/ml-model-deployment/blob/main/sc.pickle
-
-wget https://github.com/futurexskill/ml-model-deployment/blob/main/classifier.pickle
-
-
-
-rm -f filename
-
-python3 test.py
-
-npm i serve -D
-
-npx serve -s build
-
-conda deactivate
-
-rm -rf venv
-
-pip
-
-lsof -n | grep LISTEN
-
-lsof -i :5000
-
-kill -9 PIN
+#### run server with docker
+    docker run -t --rmm -p 8501:8501
